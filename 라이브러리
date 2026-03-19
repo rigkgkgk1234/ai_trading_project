@@ -1,0 +1,11 @@
+사용 라이브러리
+
+websockets, asyncio: 실시간 데이터 수집용
+
+pandas, numpy: 데이터 전처리 및 인메모리 버퍼링용
+
+fastapi, uvicorn: 백엔드 API 서버 및 실행기
+
+streamlit: 실시간 프론트엔드 대시보드용
+
+scikit-learn, xgboost, onnxruntime: 경량화 모델(SLM) 학습 및 빠른 로컬 추론용
