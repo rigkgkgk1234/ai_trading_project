@@ -56,6 +56,10 @@ async def lifespan(app: FastAPI):
     yield  # 서버 실행
 
     collector_task.cancel()
+    try:
+        await collector_task
+    except asyncio.CancelledError:
+        pass   # start_collector 내부에서 re-raise 된 CancelledError 수거
     buffer.stop()
     logger.info("👋  서버 종료")
 
