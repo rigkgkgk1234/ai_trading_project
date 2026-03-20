@@ -1,4 +1,4 @@
-# 📈 AI 기반 국내 주가 예측 시스템
+# AI 기반 국내 주가 예측 시스템
 
 > KIS WebSocket × ONNX SLM × FastAPI × Streamlit  
 > **Python 풀스택** 실시간 국내 주식 AI 예측 도구
