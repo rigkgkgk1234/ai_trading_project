@@ -1,0 +1,26 @@
+# 환경변수 (KIS API 키 포함 - 절대 올리면 안 됨)
+.env
+
+# 학습된 모델 파일 (용량 큼)
+models/stock_model.onnx
+models/scaler.pkl
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# 데이터 캐시
+data/
+
+# 구버전 보관 폴더
+old_codes/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
