@@ -3,7 +3,7 @@
 > KIS WebSocket × ONNX SLM × FastAPI × Streamlit  
 > **Python 풀스택** 실시간 국내 주식 AI 예측 도구
 
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## 프로젝트 구조
 
@@ -28,47 +28,128 @@ ai_trading_project/
 └── .env.example
 ```
 
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## 빠른 시작
 
-### 1. 환경 설정
+### 환경 설정
 
 ```bash
-# 의존 패키지 설치
-pip install -r requirements.txt
+# 의존 패키지 설치 (최초 1회)
+pip3 install -r requirements.txt
 
 # 환경변수 파일 생성
 cp .env.example .env
 # .env 파일을 열어 KIS_APP_KEY, KIS_APP_SECRET 등 입력
-# (API 없이 테스트하려면 SIMULATION_MODE=true 유지)
+# API 없이 테스트하려면 SIMULATION_MODE=true 유지 (기본값)
 ```
 
-### 2. 모델 학습 (최초 1회)
+───────────────────────────────────────────────────────────
 
+## 시뮬레이션 모드 실행 (KIS API 없이 테스트)
+
+> API 키 없이 랜덤 주가 데이터로 전체 파이프라인을 테스트할 수 있습니다.  
+> 터미널(Mac) 또는 명령 프롬프트/PowerShell(Windows)을 **3개** 열어서 순서대로 실행합니다.
+
+───────────────────────────────────────────────────────────
+
+### Mac
+
+**터미널 1 — AI 모델 학습 (최초 1회, 약 3~5분 소요)**
 ```bash
-# 기본 8개 종목으로 학습 (PyKRX 데이터, 약 3~5분 소요)
+cd ai_trading_project
+python3 models/train_model.py
+# 완료 메시지: ✅ 학습 완료! POST /model/reload 호출로 즉시 반영됩니다.
+```
+
+**터미널 2 — FastAPI 서버 시작**
+```bash
+cd ai_trading_project
+python3 -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+# 정상 실행 시: 🚀 AI 국내 주식 예측 서버 시작 / ⚠️ 시뮬레이션 모드 시작
+```
+
+**터미널 3 — Streamlit 대시보드 시작**
+```bash
+cd ai_trading_project
+python3 -m streamlit run frontend/app.py
+# 브라우저 자동 열림: http://localhost:8501
+```
+
+**모델 학습 완료 후 반영 (서버 재시작 없이)**
+```bash
+curl -X POST http://localhost:8000/model/reload
+```
+
+**종료:** 각 터미널에서 `Ctrl + C`
+
+───────────────────────────────────────────────────────────
+
+### Windows
+
+**명령 프롬프트 1 — AI 모델 학습 (최초 1회, 약 3~5분 소요)**
+```cmd
+cd ai_trading_project
+python models/train_model.py
+# 완료 메시지: ✅ 학습 완료! POST /model/reload 호출로 즉시 반영됩니다.
+```
+
+**명령 프롬프트 2 — FastAPI 서버 시작**
+```cmd
+cd ai_trading_project
+python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+# 정상 실행 시: 🚀 AI 국내 주식 예측 서버 시작 / ⚠️ 시뮬레이션 모드 시작
+```
+
+**명령 프롬프트 3 — Streamlit 대시보드 시작**
+```cmd
+cd ai_trading_project
+python -m streamlit run frontend/app.py
+# 브라우저 자동 열림: http://localhost:8501
+```
+
+**모델 학습 완료 후 반영 (서버 재시작 없이)**
+```cmd
+curl -X POST http://localhost:8000/model/reload
+```
+
+**종료:** 각 명령 프롬프트에서 `Ctrl + C`
+
+───────────────────────────────────────────────────────────
+
+## 실전 모드 전환 (KIS API 연결)
+
+`.env` 파일에서 아래 항목을 수정합니다:
+```
+SIMULATION_MODE=false
+KIS_APP_KEY=발급받은_앱키
+KIS_APP_SECRET=발급받은_앱시크릿
+KIS_ACCOUNT_NO=계좌번호_앞8자리
+```
+
+───────────────────────────────────────────────────────────
+
+## 모델 학습 상세
+
+**Mac:**
+```bash
+# 기본 8개 종목 학습
+python3 models/train_model.py
+
+# 특정 종목만 학습
+python3 models/train_model.py --codes 005930 000660 035420
+```
+
+**Windows:**
+```cmd
+# 기본 8개 종목 학습
 python models/train_model.py
 
 # 특정 종목만 학습
 python models/train_model.py --codes 005930 000660 035420
 ```
 
-### 3. FastAPI 서버 시작
-
-```bash
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
-# http://localhost:8000/docs  → Swagger UI
-```
-
-### 4. Streamlit 대시보드 실행
-
-```bash
-streamlit run frontend/app.py
-# http://localhost:8501
-```
-
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## 아키텍처
 
@@ -92,7 +173,7 @@ KIS WebSocket ─→ collector.py ─→ core/buffer.py (슬라이딩 윈도우)
 | 백엔드 | FastAPI (async) | 비동기 I/O, 동시 추론 지원 |
 | 프론트엔드 | Streamlit | pandas 직결, 빠른 PoC |
 
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## AI 모델 상세
 
@@ -116,7 +197,7 @@ KIS WebSocket ─→ collector.py ─→ core/buffer.py (슬라이딩 윈도우)
 
 > `PREDICTION_WINDOW` (기본값 5봉) 조정 가능 (`config.py`)
 
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## 주요 API 엔드포인트
 
@@ -129,7 +210,7 @@ KIS WebSocket ─→ collector.py ─→ core/buffer.py (슬라이딩 윈도우)
 | POST | `/model/reload` | 재학습 후 핫-리로드 |
 | GET | `/stream/{code}` | SSE 실시간 스트림 |
 
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## 향후 업데이트 로드맵
 
@@ -140,7 +221,7 @@ KIS WebSocket ─→ collector.py ─→ core/buffer.py (슬라이딩 윈도우)
 - [ ] 알림 (텔레그램 / 이메일)
 - [ ] Docker Compose 배포 구성
 
-────────────────────────────────────────────────────
+───────────────────────────────────────────────────────────
 
 ## 면책 조항
 

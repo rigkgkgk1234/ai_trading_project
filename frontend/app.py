@@ -109,8 +109,8 @@ _COLORS = {
     "bg"     : "#1e1e2e",
     "grid"   : "#313244",
     "text"   : "#cdd6f4",
-    "up"     : "#a6e3a1",
-    "down"   : "#f38ba8",
+    "up"     : "#e53935",   # 상승 = 빨강 (한국 주식 기준)
+    "down"   : "#1565c0",   # 하락 = 파랑 (한국 주식 기준)
     "ma5"    : "#89dceb",
     "ma20"   : "#fab387",
     "volume" : "#585b70",
@@ -134,26 +134,45 @@ def _base_layout(title: str = "") -> dict:
 
 
 def render_price_chart(df: pd.DataFrame, code: str, name: str):
-    """캔들스틱 + MA5/MA20 + 거래량 복합 차트."""
+    """캔들스틱(OHLC 리샘플링) + MA5/MA20 + 거래량 복합 차트."""
     if df.empty:
         st.info("데이터 수집 중... 잠시 기다려 주세요.")
         return
 
-    df = df.tail(200).copy()
-    price = df["price"]
+    df = df.tail(500).copy()
+    df = df.set_index("timestamp")
 
-    df["ma5"]  = price.rolling(5).mean()
-    df["ma20"] = price.rolling(20).mean()
+    # ── 1초 단위 OHLC 리샘플링 ────────────────
+    # 틱 데이터를 1초봉으로 집계해 정통 캔들스틱 구현
+    ohlc = df["price"].resample("5s").ohlc().dropna()
+    vol  = df["tick_vol"].resample("5s").sum().reindex(ohlc.index)
+
+    if len(ohlc) < 2:
+        st.info("데이터 수집 중... 잠시 기다려 주세요.")
+        return
+
+    ohlc = ohlc.tail(200)
+    vol  = vol.reindex(ohlc.index)
+
+    # MA (종가 기준)
+    ohlc["ma5"]  = ohlc["close"].rolling(5).mean()
+    ohlc["ma20"] = ohlc["close"].rolling(20).mean()
+
+    # ── 색상: 시가 vs 종가 (한국 기준: 상승=빨강, 하락=파랑) ──
+    candle_colors = [
+        _COLORS["up"] if c >= o else _COLORS["down"]
+        for c, o in zip(ohlc["close"], ohlc["open"])
+    ]
 
     fig = go.Figure()
 
     # ── 캔들스틱 ──────────────────────────────
     fig.add_trace(go.Candlestick(
-        x     = df["timestamp"],
-        open  = df["open"],
-        high  = df["high"],
-        low   = df["low"],
-        close = df["price"],
+        x     = ohlc.index,
+        open  = ohlc["open"],
+        high  = ohlc["high"],
+        low   = ohlc["low"],
+        close = ohlc["close"],
         name  = f"{name}",
         increasing_line_color = _COLORS["up"],
         decreasing_line_color = _COLORS["down"],
@@ -163,35 +182,36 @@ def render_price_chart(df: pd.DataFrame, code: str, name: str):
 
     # ── 이동평균 ──────────────────────────────
     fig.add_trace(go.Scatter(
-        x=df["timestamp"], y=df["ma5"],
+        x=ohlc.index, y=ohlc["ma5"],
         mode="lines", name="MA5",
         line=dict(color=_COLORS["ma5"], width=1.2),
     ))
     fig.add_trace(go.Scatter(
-        x=df["timestamp"], y=df["ma20"],
+        x=ohlc.index, y=ohlc["ma20"],
         mode="lines", name="MA20",
         line=dict(color=_COLORS["ma20"], width=1.2),
     ))
 
-    layout = _base_layout(f"{name}({code}) 실시간 차트")
+    layout = _base_layout(f"{name}({code}) 실시간 차트 (5초봉)")
     layout["xaxis_rangeslider_visible"] = False
     layout["height"] = 420
     fig.update_layout(**layout)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # ── 거래량 바 차트 ────────────────────────
-    colors = [
+    vol_colors = [
         _COLORS["up"] if c >= o else _COLORS["down"]
-        for c, o in zip(df["price"], df["open"])
+        for c, o in zip(ohlc["close"], ohlc["open"])
     ]
     fig_vol = go.Figure(go.Bar(
-        x=df["timestamp"], y=df["tick_vol"],
-        marker_color=colors, name="거래량",
+        x=ohlc.index, y=vol,
+        marker_color=vol_colors, name="거래량",
+        marker_line_width=0,
     ))
     layout_vol = _base_layout("거래량")
     layout_vol["height"] = 120
     fig_vol.update_layout(**layout_vol)
-    st.plotly_chart(fig_vol, use_container_width=True)
+    st.plotly_chart(fig_vol, use_container_width=True, config={'displayModeBar': False})
 
 
 def render_indicators(df: pd.DataFrame):
@@ -235,7 +255,7 @@ def render_indicators(df: pd.DataFrame):
         fig.add_hline(y=70, line_dash="dash", line_color="#f38ba8", annotation_text="과매수(70)")
         fig.add_hline(y=30, line_dash="dash", line_color="#a6e3a1", annotation_text="과매도(30)")
         fig.update_layout(**_base_layout("RSI (14)"), height=250, yaxis_range=[0, 100])
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with tab2:
         fig = go.Figure()
@@ -256,7 +276,7 @@ def render_indicators(df: pd.DataFrame):
             name="Signal", line=dict(color=_COLORS["signal"], width=1.5)
         ))
         fig.update_layout(**_base_layout("MACD"), height=250)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     with tab3:
         fig = go.Figure()
@@ -279,7 +299,7 @@ def render_indicators(df: pd.DataFrame):
             name="현재가", line=dict(color=_COLORS["up"], width=1.5),
         ))
         fig.update_layout(**_base_layout("볼린저 밴드 (20, 2σ)"), height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 
 def render_portfolio_table(predictions: list):
