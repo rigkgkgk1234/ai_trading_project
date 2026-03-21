@@ -17,7 +17,7 @@ import asyncio
 import json
 import random
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import requests
 import websockets
@@ -95,7 +95,7 @@ _H0STCNT0_IDX = {
     "stck_lwpr"     : 15,  # 저가
 }
 
-def _parse_tick(raw: str, code_name_map: dict) -> dict | None:
+def _parse_tick(raw: str, code_name_map: dict) -> Optional[dict]:
     """KIS H0STCNT0 데이터 문자열을 틱 dict로 변환합니다."""
     try:
         parts = raw.split("^")
