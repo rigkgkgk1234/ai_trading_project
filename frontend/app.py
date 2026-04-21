@@ -355,9 +355,11 @@ def main():
     health = fetch_health()
     if health:
         status_color = "🟢" if health.get("model_ready") else "🟡"
+        model_status = "✅ 로드됨" if health.get("model_ready") else "⏳ 준비 중 (학습 완료)"
+        model_detail = "" if health.get("model_ready") else "(다른 종목 학습 필요)"
         st.sidebar.markdown(
             f"{status_color} 서버 연결됨  \n"
-            f"모델: {'로드됨' if health.get('model_ready') else '미로드 (학습 필요)'}  \n"
+            f"모델: {model_status}{model_detail}\n"
             f"버퍼: {health.get('buffer_rows', 0):,}행 / {health.get('buffer_codes', 0)}종목"
         )
     else:

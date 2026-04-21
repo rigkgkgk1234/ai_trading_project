@@ -61,6 +61,39 @@ LABEL_MAP         = {0: "HOLD", 1: "BUY", 2: "SELL"}
 PREDICTION_WINDOW = 5   # 몇 틱 후 방향 예측
 MIN_ROWS_FOR_PRED = 60  # ma60 계산을 위해 최소 60행 필요
 
+
+# ─────────────────────────────────────────────
+# 4. 피처 이름
+# ─────────────────────────────────────────────
+
+FEATURE_COLS: list[str] = [
+    "prev_1_close",       # 전 봉 종가
+    "prev_2_close",       # 전전 봉 종가
+    "prev_5_close",       # 5 일 전 종가
+    "prev_10_close",      # 10 일 전 종가
+    "vol_ma_5",           # 5 일 이동평균량
+    "vol_ma_10",          # 10 일 이동평균량
+    "vol_ratio_5",        # 5 일 평균 대비 거래량 비율
+    "vol_ratio_10",       # 10 일 평균 대비 거래량 비율
+    "volatility",         # ATR
+    "rsi",                # RSI
+    "cci",                # CCI
+    "wma",                # WMA
+    "ema_12",             # EMA (단기)
+    "ema_26",             # EMA (장기)
+    "macd",               # MACD
+    "macd_signal",        # MACD 신호선
+    "macd_hist",          # MACD 히스토그램
+    "adx",                # ADX
+    "ao",                 # AO
+    "mom",                # 모멘텀
+    "roc",                # ROC
+    "upper_band",         # 볼린저밴드 상단
+    "lower_band",         # 볼린저밴드 하단
+    "price_pos",          # 가격 위치
+    "price_log_return",   # 로그 수익률
+]
+
 # ─────────────────────────────────────────────
 # FastAPI 서버 설정
 # ─────────────────────────────────────────────
