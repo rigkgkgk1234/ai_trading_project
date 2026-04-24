@@ -40,9 +40,22 @@ API 키 없이 랜덤 주가 데이터로 전체 파이프라인을 테스트할
 
 ### 터미널 1 — AI 모델 학습 (최초 1 회, 약 3~5 분 소요)
 
+**맥/Linux**
 ```bash
-cd /Users/jihoon/Downloads/ai_trading_project
+cd ai_trading_project
 python3 models/train_model.py
+```
+
+**윈도우 (PowerShell)**
+```powershell
+cd ai_trading_project
+python models/train_model.py
+```
+
+**윈도우 (CMD)**
+```cmd
+cd ai_trading_project
+python models/train_model.py
 ```
 
 완료 메시지: 학습 완료! POST /model/reload 호출로 즉시 반영됩니다.
@@ -57,8 +70,15 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 
 ### 터미널 3 — Streamlit 대시보드 시작
 
+**맥/Linux**
 ```bash
-cd /Users/jihoon/Downloads/ai_trading_project/frontend
+cd ai_trading_project/frontend
+streamlit run app.py
+```
+
+**윈도우 (PowerShell/CMD)**
+```powershell
+cd ai_trading_project\frontend
 streamlit run app.py
 ```
 
@@ -108,7 +128,7 @@ python3 models/train_model.py --codes 005930 000660 035420
 ### 입력 피처 (19 개)
 
 | 카테고리 | 피처 |
-|----------|------|
+|------|------|
 | 이동평균 | MA5, MA10, MA20, MA60, MA 비율 3 개 |
 | 모멘텀 | RSI(14), MACD, MACD Signal, MACD Hist |
 | 변동성 | Bollinger Band Width/%, ATR(14) |
@@ -118,7 +138,7 @@ python3 models/train_model.py --codes 005930 000660 035420
 ### 예측 레이블
 
 | 레이블 | 조건 |
-|--------|--|
+|------|------|
 | BUY | N 봉 후 수익률 +0.5% 이상 |
 | SELL | N 봉 후 수익률 -0.5% 이하 |
 | HOLD | 그 외 |
@@ -130,7 +150,7 @@ PREDICTION_WINDOW(기본값 5 봉) 조정 가능 (config.py)
 ## 주요 API 엔드포인트
 
 | Method | Path | 설명 |
-|--------|--|------|
+|------|------|------|
 | GET | /health | 서비스 상태 확인 |
 | GET | /predict/{code} | 단일 종목 AI 예측 |
 | GET | /predict | 전체 종목 일괄 예측 |
@@ -173,7 +193,7 @@ KIS WebSocket → collector.py → core/buffer.py(슬라이딩 윈도우)
 ### 핵심 설계 결정
 
 | 컴포넌트 | 선택 | 이유 |
-|--------|--|------|
+|------|------|------|
 | 데이터 수집 | WebSocket(Push) | REST 폴링 대비 지연 없음 |
 | 메모리 관리 | deque + 슬라이딩 윈도우 | OOM 방지, O(1) 삽입/삭제 |
 | AI 모델 | XGBoost → ONNX | CPU 로컬 추론 최적화 |

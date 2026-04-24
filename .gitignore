@@ -28,3 +28,6 @@ Thumbs.db
 # 기획 문서
 기획
 라이브러리
+
+# ignore
+.gitignore
